@@ -26,7 +26,7 @@ impl View for DefaultView {
 
 fn main() {
     let mut game = Game::new("Rustboy", || {
-        Box::new(DefaultView)
+        Some(Box::new(DefaultView))
     });
 
     game.run();

@@ -27,11 +27,11 @@ events! {
 pub struct Game<'window> {
     pub events: Events,
     pub renderer: Renderer<'window>,
-    current_view: Box<View>,
+    current_view: Option<Box<View>>,
 }
 
 impl<'window> Game<'window> {
-    pub fn new<F: Fn() -> Box<View>>(title: &str, init: F) -> Self {
+    pub fn new<F: Fn() -> Option<Box<View>>>(title: &str, init: F) -> Self {
         let sdl = ::sdl2::init().unwrap();
         let video = sdl.video().unwrap();
 
@@ -85,21 +85,27 @@ impl<'window> Game<'window> {
                 }
 
                 ViewAction::ChangeView(new_view) => {
-                    self.current_view = new_view;
+                    self.current_view = Some(new_view);
                 }
             }
         }
     }
 
     fn update(&mut self, elapsed: u32) -> ViewAction {
-        self.events.pump(&mut self.renderer);
+        if let Some(current_view) = self.current_view {
+            self.events.pump(&mut self.renderer);
 
-        self.current_view.update(&mut self, elapsed)
+            current_view.update(self, elapsed)
+        } else {
+            ViewAction::None
+        }
     }
 
     fn render(&mut self, elapsed: u32) {
-        self.current_view.render(&mut self, elapsed);
+        if let Some(current_view) = self.current_view {
+            current_view.render(self, elapsed);
 
-        self.renderer.present();
+            self.renderer.present();
+        }
     }
 }
