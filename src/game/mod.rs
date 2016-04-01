@@ -27,11 +27,11 @@ events! {
 pub struct Game<'window> {
     pub events: Events,
     pub renderer: Renderer<'window>,
-    current_view: Option<Box<View>>,
+    current_view: Option<View>,
 }
 
 impl<'window> Game<'window> {
-    pub fn new<F: Fn() -> Option<Box<View>>>(title: &str, init: F) -> Self {
+    pub fn new<F: Fn() -> Option<View>>(title: &str, init: F) -> Self {
         let sdl = ::sdl2::init().unwrap();
         let video = sdl.video().unwrap();
 
@@ -75,9 +75,12 @@ impl<'window> Game<'window> {
                 fps = 0;
             }
 
-            match self.update(elapsed) {
+            let mut current_view = self.current_view.take().unwrap();
+
+            match self.update(current_view, elapsed) {
                 ViewAction::None => {
-                    self.render(elapsed);
+                    self.render(current_view, elapsed);
+                    self.current_view = Some(current_view);
                 }
 
                 ViewAction::Quit => {
@@ -91,21 +94,17 @@ impl<'window> Game<'window> {
         }
     }
 
-    fn update(&mut self, elapsed: u32) -> ViewAction {
-        if let Some(current_view) = self.current_view {
-            self.events.pump(&mut self.renderer);
+    fn update(&mut self, current_view: &mut View, elapsed: u32) -> ViewAction {
 
-            current_view.update(self, elapsed)
-        } else {
-            ViewAction::None
-        }
+        self.events.pump(&mut self.renderer);
+
+        current_view.update(self, elapsed)
+
     }
 
-    fn render(&mut self, elapsed: u32) {
-        if let Some(current_view) = self.current_view {
-            current_view.render(self, elapsed);
+    fn render(&mut self, current_view: &mut View, elapsed: u32) {
+        current_view.render(self, elapsed);
 
-            self.renderer.present();
-        }
+        self.renderer.present();
     }
 }
