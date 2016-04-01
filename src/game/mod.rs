@@ -2,8 +2,9 @@
 mod events;
 mod view;
 
-use std::thread;
+use std::borrow::BorrowMut;
 use std::time::{Duration, Instant};
+use std::thread;
 
 // use time::{Duration, PreciseTime};
 use sdl2::render::Renderer;
@@ -27,11 +28,11 @@ events! {
 pub struct Game<'window> {
     pub events: Events,
     pub renderer: Renderer<'window>,
-    current_view: Option<View>,
+    current_view: Option<Box<View>>,
 }
 
 impl<'window> Game<'window> {
-    pub fn new<F: Fn() -> Option<View>>(title: &str, init: F) -> Self {
+    pub fn new<F: Fn() -> Option<Box<View>>>(title: &str, init: F) -> Self {
         let sdl = ::sdl2::init().unwrap();
         let video = sdl.video().unwrap();
 
@@ -75,11 +76,11 @@ impl<'window> Game<'window> {
                 fps = 0;
             }
 
-            let mut current_view = self.current_view.take().unwrap();
+            let current_view = self.current_view.take().unwrap();
 
-            match self.update(current_view, elapsed) {
+            match self.update(current_view.borrow_mut(), elapsed) {
                 ViewAction::None => {
-                    self.render(current_view, elapsed);
+                    self.render(current_view.borrow_mut(), elapsed);
                     self.current_view = Some(current_view);
                 }
 
