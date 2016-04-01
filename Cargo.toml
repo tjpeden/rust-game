@@ -1,0 +1,8 @@
+[package]
+name = "game"
+version = "0.1.0"
+authors = ["TJ Peden <tj.peden@tjcoding.com>"]
+
+[dependencies]
+sdl2 = "0.16.1"
+time = "0.1.34"
